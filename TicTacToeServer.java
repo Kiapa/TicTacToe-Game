@@ -58,11 +58,11 @@ public class TicTacToeServer {
             playerO.start();
             
             // Give initial turn to Player X
-            playerX.output.println("TURN");
             playerX.output.println(getBoardState());
+            playerX.output.println("TURN");
 
-            playerO.output.println("WAIT");
             playerO.output.println(getBoardState());
+            playerO.output.println("WAIT");
 
             // Keep main thread alive until game ends
             playerX.join();
@@ -178,12 +178,14 @@ public class TicTacToeServer {
                                 break; // End game
                             } else {
                                 // Continue game
+                                String currentBoard = getBoardState();
+                                
+                                output.println(currentBoard);
                                 output.println("WAIT");
-                                output.println(getBoardState());
                                 
                                 if (opponent.connected) {
+                                    opponent.output.println(currentBoard);
                                     opponent.output.println("TURN");
-                                    opponent.output.println(getBoardState());
                                 }
                             }
                         } else {

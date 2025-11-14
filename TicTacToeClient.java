@@ -86,6 +86,10 @@ public class TicTacToeClient {
                 } else if (line.startsWith("MESSAGE")) {
                     System.out.println(">>> " + line.substring(8));
                     
+                } else if (line.matches("[XO0-9, ]+") && line.contains(",")) {
+                    // Board state update - update immediately and check next command
+                    updateBoard(line);
+                    
                 } else if (line.startsWith("TURN")) {
                     printBoard();
                     System.out.println("=== YOUR TURN ===");
@@ -117,12 +121,8 @@ public class TicTacToeClient {
                     }
 
                 } else if (line.startsWith("WAIT")) {
-                    System.out.println("\n>>> Waiting for opponent's move...");
-                    
-                } else if (line.matches("[XO0-9, ]+") && line.contains(",")) {
-                    // Board state update - display immediately
-                    updateBoard(line);
                     printBoard();
+                    System.out.println("\n>>> Waiting for opponent's move...");
                     
                 } else if (line.startsWith("VICTORY")) {
                     System.out.println("\n╔═══════════════════════════════╗");
