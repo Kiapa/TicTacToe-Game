@@ -27,53 +27,61 @@ public class TicTacToeServer {
         
         ServerSocket listener = new ServerSocket(port);
         System.out.println("Tic Tac Toe Server is Running on port " + port + "...");
-        System.out.println("Waiting for players to connect...");
+        System.out.println("Server will accept multiple games. Press Ctrl+C to stop.");
         
-        try {
-            // Wait for Player X to connect
-            playerX = new Player(listener.accept(), "X");
-            System.out.println("Player X connected from " + playerX.socket.getInetAddress());
-            playerX.output.println("WELCOME X");
-            playerX.output.println("MESSAGE Waiting for opponent to connect...");
+        // Keep server running indefinitely
+        while (true) {
+            try {
+                System.out.println("\n=== Waiting for players to connect for a new game ===");
+                
+                // Reset game state for new game
+                gameActive = true;
+                turn = "X";
+                
+                // Wait for Player X to connect
+                playerX = new Player(listener.accept(), "X");
+                System.out.println("Player X connected from " + playerX.socket.getInetAddress());
+                playerX.output.println("WELCOME X");
+                playerX.output.println("MESSAGE Waiting for opponent to connect...");
 
-            // Wait for Player O to connect
-            playerO = new Player(listener.accept(), "O");
-            System.out.println("Player O connected from " + playerO.socket.getInetAddress());
-            playerO.output.println("WELCOME O");
-            
-            playerX.output.println("MESSAGE Both players connected. Game starting!");
-            playerO.output.println("MESSAGE Both players connected. X starts first.");
+                // Wait for Player O to connect
+                playerO = new Player(listener.accept(), "O");
+                System.out.println("Player O connected from " + playerO.socket.getInetAddress());
+                playerO.output.println("WELCOME O");
+                
+                playerX.output.println("MESSAGE Both players connected. Game starting!");
+                playerO.output.println("MESSAGE Both players connected. X starts first.");
 
-            // Link players
-            playerX.setOpponent(playerO);
-            playerO.setOpponent(playerX);
+                // Link players
+                playerX.setOpponent(playerO);
+                playerO.setOpponent(playerX);
 
-            // Initialize board
-            for (int i = 0; i < 9; i++) {
-                board[i] = String.valueOf(i + 1);
+                // Initialize board
+                for (int i = 0; i < 9; i++) {
+                    board[i] = String.valueOf(i + 1);
+                }
+
+                // Start the game threads
+                playerX.start();
+                playerO.start();
+                
+                // Give initial turn to Player X
+                playerX.output.println(getBoardState());
+                playerX.output.println("TURN");
+
+                playerO.output.println(getBoardState());
+                playerO.output.println("WAIT");
+
+                // Wait for this game to finish before accepting new players
+                playerX.join();
+                playerO.join();
+                
+                System.out.println("Game ended. Ready for next game.");
+
+            } catch (Exception e) {
+                System.out.println("Game error: " + e.getMessage());
+                e.printStackTrace();
             }
-
-            // Start the game threads
-            playerX.start();
-            playerO.start();
-            
-            // Give initial turn to Player X
-            playerX.output.println(getBoardState());
-            playerX.output.println("TURN");
-
-            playerO.output.println(getBoardState());
-            playerO.output.println("WAIT");
-
-            // Keep main thread alive until game ends
-            playerX.join();
-            playerO.join();
-            
-            System.out.println("Game ended. Server shutting down.");
-
-        } catch (Exception e) {
-            System.out.println("Server error: " + e.getMessage());
-        } finally {
-            listener.close();
         }
     }
 
@@ -168,9 +176,17 @@ public class TicTacToeServer {
                                     }
                                     System.out.println("Game ended in a draw.");
                                 } else {
-                                    output.println("VICTORY " + winner);
-                                    if (opponent.connected) {
-                                        opponent.output.println("DEFEAT " + winner);
+                                    // Send victory/defeat messages based on who won
+                                    if (winner.equals(playerMark)) {
+                                        output.println("VICTORY " + winner);
+                                        if (opponent.connected) {
+                                            opponent.output.println("DEFEAT " + winner);
+                                        }
+                                    } else {
+                                        output.println("DEFEAT " + winner);
+                                        if (opponent.connected) {
+                                            opponent.output.println("VICTORY " + winner);
+                                        }
                                     }
                                     System.out.println("Player " + winner + " wins!");
                                 }
